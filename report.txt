@@ -1,0 +1,253 @@
+REPORT
+--------------------------------------------------
+PYTHON SCRIPTS AND THEIR PARAMETERS FOR EXECUTION
+--------------------------------------------------
+1 python3 spamtest_preprocess.py OPTION (option - nb/svm/megam)- creates feat file for raw spam test data
+2 python3 shufsplit.py INPUT_FEATFILE OUTPUT_TRAINFILE OUTPUT_TESTFILE OPTION (option - bad for train-25%, test-75%; good for train-75%, test-25%)
+
+***CHANGE OUTPUT FILENAME IN NBCLASSIFY BEFORE PROCEEDING***
+
+3 python3 nblearn.py INPUT_TRAINFILE OUTPUT_MODELFILE
+4 python3 nbclassify.py INPUT_MODELFILEOUTPUT_TESTFILE
+5 python3 count.py INPUT_OUTFILE (calculate fscore, accuracy)
+6 python3 email_preprocess.py - creates feature file from raw input files
+7 python3 feat_to_test_file_gen.py INPUT_FEATFILE OUTPUT_TESTFILE - creates test file from training feature file
+8 python3 imdb_preprocess.py -creates feature files with POS/NEG labels
+9 python3 svm_preprocess.py INPUT_FEATFILE OUTPUT_TRAINFILE OUTPUT_TESTFILE OPTION (option - bad for train-25%, test-75%; good for train-75%, test-25%) 
+	-creates SVM training and test file
+10 python3 insertlabel.py INPUT_FEATFILE OPTION (option: svm/megam) - inserts labels into test data for svm and megam
+11 ./svm_learn INPUT_TRAINFILE OUTPUT_MODELFILE
+12 ./svm_classify INPUT_TESTFILE INPUT_MODELFILE OUTPUT_OUTFILE
+13 python3 svm_postprocess.py INPUT_OUTFILE - converts proobabilities back to class labels
+14 python3 megam_preprocess.py INPUT_FEATFILE OUTPUT_TRAINFILE OUTPUT_TESTFILE OPTION (option - bad for train-25%, test-75%; good for train-75%, test-25%) 
+	-creates MEGAM training and test file
+15 megam learn
+16 megam classify
+17 megam postprocess
+18 python3 addone.py INPUT_FEATFILE - adds one to training data for SVM
+19 python3 createchk.py INPUT_TESTFILE_WITHLABELS TOOLKIT DATASET
+-----------------------------------------------------------------------------------------------------------
+ORDER OF EXECUTION - NBCLASSIFY
+--------------------------------
+
+1a TO NBCLASSIFY TRAIN DATA FOR SPAM:75% for training and 25% for development: 
+python3 email_preprocess.py
+python3 shufsplit.py email.feat email.train email.test good
+python3 nblearn.py email.train spam.nb.model
+python3 nbclassify.py spam.nb.model email.test
+python3 count.py spam.nb.out
+Accuracy - 96.79
+Precision(SPAM) - 99.32 , Recall(SPAM) - 94.33, F1 Score(SPAM) - 96.76
+Precision(HAM) - 94.42, Recall(HAM) - 99.34, F1 Score(HAM) - 96.82
+
+1b TO NBCLASSIFY TRAIN DATA FOR SENTIMENT:75% for training and 25% for development: 
+python3 imdb_preprocess.py
+python3 shufsplit.py imdb.feat imdb.train imdb.test good
+python3 nblearn.py imdb.train sentiment.nb.model
+python3 nbclassify.py sentiment.nb.model imdb.test
+python3 count.py sentiment.nb.out
+Accuracy - 85.87
+Precision(POS) - 85.49, Recall(POS) - 86.55, F1 Score(POS) - 86.02
+Precision(NEG) - 86.26, Recall(NEG) - 8518, F1 Score(NEG) - 85.71
+
+2a TO NBCLASSIFY TRAIN DATA FOR SPAM:25% for training and 75% for development: 
+python3 email_preprocess.py
+python3 shufsplit.py email.feat email.train email.test bad
+python3 nblearn.py email.train spam.nb.model
+python3 nbclassify.py spam.nb.model email.test
+python3 count.py spam.nb.out
+Accuracy - 96.04
+Precision(SPAM) - 99.39 , Recall(SPAM) - 92.71, F1 Score(SPAM) - 95.94
+Precision(HAM) - 93.08, Recall(HAM) - 99.43, F1 Score(HAM) - 96.15
+
+2b TO NBCLASSIFY TRAIN DATA FOR SENTIMENT:75% for training and 25% for development: 
+python3 imdb_preprocess.py
+python3 shufsplit.py imdb.feat imdb.train imdb.test bad
+python3 nblearn.py imdb.train sentiment.nb.model
+python3 nbclassify.py sentiment.nb.model imdb.test
+python3 count.py sentiment.nb.out
+Accuracy - 83.46
+Precision(POS) - 83.48, Recall(POS) - 83.27, F1 Score(POS) - 83.33
+Precision(NEG) -83.44, Recall(NEG) -83.65 , F1 Score(NEG) - 83.55
+
+3a TO NBCLASSIFY UNLABELED TEST DATA FOR SPAM:
+python3 email_preprocess.py
+python3 spamtest_preprocess.py nb
+python3 nblearn.py email.feat spam.nb.model
+python3 nbclassify.py spam.nb.model spamtest.feat
+
+3b TO NBCLASSIFY UNLABELED TEST DATA FOR SENTIMENT ANALYSIS:
+python3 imdb_preprocess.py
+python3 shuf.py imdb.feat
+python3 nblearn.py imdb.feat sentiment.nb.model
+python3 nbclassify.py sentiment.nb.model sentiment_test.feat.fixed
+python3 count.py sentiment.nb.out
+--------------------------------------------------------------------------------------------------------------
+ORDER OF EXECUTION - SVM
+--------------------------------
+1a TO RUN SVM ON TRAIN DATA FOR SPAM:75% for training and 25% for development: 
+python3 email_preprocess.py
+python3 svm_preprocess.py email.feat spam.svm.train spam.svm.test good
+./svm_learn spam.svm.train spam.svm.model
+./svm_classify spam.svm.test spam.svm.model spam.svm.out
+python3 svm_postprocess.py spam.svm.out
+Accuracy on test set: 95.59% (5306 correct, 245 incorrect, 5551 total)
+Precision/recall on test set: 92.29%/99.53% F1 Score: 95.77
+
+1b TO RUN SVM ON TRAIN DATA FOR SENTIMENT ANALYSIS: 75% for training and 25% for development: 
+python3 imdb_preprocess.py
+python3 svm_preprocess.py imdb.feat sentiment.svm.train sentiment.svm.test good
+./svm_learn sentiment.svm.train sentiment.svm.model
+./svm_classify sentiment.svm.test sentiment.svm.model sentiment.svm.out
+python3 svm_postprocess.py sentiment.svm.out
+Accuracy on test set: 87.23% (5452 correct, 798 incorrect, 6250 total)
+Precision/recall on test set: 86.35%/88.76% F1 Score: 86.55
+
+2a TO RUN SVM ON TRAIN DATA FOR SPAM: 25% for training and 75% for development:
+python3 email_preprocess.py
+python3 svm_preprocess.py email.feat spam.svm.train spam.svm.test bad
+./svm_learn spam.svm.train spam.svm.model
+./svm_classify spam.svm.test spam.svm.model spam.svm.out
+python3 svm_postprocess.py spam.svm.out
+Accuracy on test set: 94.16% (15680 correct, 973 incorrect, 16653 total)
+Precision/recall on test set: 90.29%/99.06% F1 Score: 94.47
+
+2b TO  RUN SVM ON TRAIN DATA FOR SENTIMENT ANALYSIS: 25% for training and 75% for development:
+python3 imdb_preprocess.py
+python3 svm_preprocess.py imdb.feat sentiment.svm.train sentiment.svm.test bad
+./svm_learn sentiment.svm.train sentiment.svm.model
+./svm_classify sentiment.svm.test sentiment.svm.model sentiment.svm.out
+python3 svm_postprocess.py sentiment.svm.out
+Accuracy on test set: 84.43% (15830 correct, 2920 incorrect, 18750 total)
+Precision/recall on test set: 83.35%/86.18% F1 Score: 84.74
+
+3a TO RUN SVM ON UNLABELED TEST DATA FOR SPAM:
+python3 email_preprocess.py
+python3 addonefeat.py email.feat
+python3 shuf.py email.feat
+python3 spamtest_preprocess.py svm
+python3 insertlabel.py spamtest.feat svm
+./svm_learn email.feat spam.svm.model
+./svm_classify svm.test spam.svm.model spam.svm.out
+python3 svm_postprocess.py spam.svm.out
+python3 createchk.py svm.test svm spam
+python3 count.py spam.svm.out
+Accuracy on test set: 50.73% (5840 correct, 5672 incorrect, 11512 total)
+Precision/recall on test set: 50.73%/99.97%
+
+3b  TO RUN SVM ON UNLABELED TEST DATA FOR SENTIMENT ANALYSIS:
+python3 imdb_preprocess.py
+python3 addonefeat.py imdb.feat
+python3 insertlabel.py sentiment_test.feat.fixed svm
+./svm_learn imdb.feat sentiment.svm.model
+./svm_classify svm.test sentiment.svm.model sentiment.svm.out
+python3 svm_postprocess.py sentiment.svm.out
+python3 createchk.py svm.test svm imdb
+python3 count.py sentiment.svm.out
+Accuracy on test set: 49.78% (12446 correct, 12554 incorrect, 25000 total)
+Precision/recall on test set: 49.96%/50.74%
+
+--------------------------------------------------------------------------------------------------------------
+ORDER OF EXECUTION - MEGAM
+--------------------------------
+1a TO RUN MEGAM ON TRAIN DATA FOR SPAM:75% for training and 25% for development: 
+python3 email_preprocess.py
+python3 megam_preprocess.py email.feat spam.megam.train spam.megam.test good
+./megam_i686.opt -fvals binary spam.megam.train > spam.megam.model
+./megam_i686.opt -predict spam.megam.model -fvals binary spam.megam.test > spam.megam.out
+python3 megam_postprocess.py spam.megam.out
+python3 createchk.py spam.megam.test megam spam
+python3 count.py spam.megam.out
+Error rate = 91 / 5551 = 0.0163934
+Accuracy:  98.36
+SPAM - Precision- 97.82 Recall - 98.91 F1 score - 98.36
+HAM - Precision- 98.90 Recall - 97.80 F1 score - 98.35
+
+1b TO RUN MEGAM ON TRAIN DATA FOR SENTIMENT ANALYSIS: 75% for training and 25% for development:
+python3 imdb_preprocess.py
+python3 megam_preprocess.py imdb.feat imdb.megam.train imdb.megam.test good
+./megam_i686.opt -fvals binary imdb.megam.train > sentiment.megam.model
+./megam_i686.opt -predict sentiment.megam.model -fvals binary imdb.megam.test > sentiment.megam.out
+python3 megam_postprocess.py sentiment.megam.out
+python3 createchk.py imdb.megam.test megam imdb
+python3 count.py sentiment.megam.out
+Error rate = 746 / 6250 = 0.11936
+Accuracy: 88.06
+POS - Precision - 87.93 Recall - 88.43 F1 score - 88.18
+NEG - Precision - 88.19 Recall - 87.68 F1 score - 87.94
+
+2a TO RUN MEGAM ON TRAIN DATA FOR SPAM: 25% for training and 75% for development: python3 python3 email_preprocess.py
+python3 megam_preprocess.py email.feat spam.megam.train spam.megam.test bad
+./megam_i686.opt -fvals binary spam.megam.train > spam.megam.model
+./megam_i686.opt -predict spam.megam.model -fvals binary spam.megam.test > spam.megam.out
+python3 megam_postprocess.py spam.megam.out
+python3 createchk.py spam.megam.test megam spam
+python3 count.py spam.megam.out
+Error rate = 92 / 5551 = 0.0165736
+Accuracy: 98.34
+SPAM - Precision -  97.76 Recall - 99.00 F1 score -  98.38
+HAM - Precision - 98.95 Recall -  97.65 F1 score -  98.30
+
+2b TO  RUN MEGAM ON TRAIN DATA FOR SENTIMENT ANALYSIS: 25% for training and 75% for development:
+python3 imdb_preprocess.py
+python3 megam_preprocess.py imdb.feat imdb.megam.train imdb.megam.test bad
+./megam_i686.opt -fvals binary imdb.megam.train > sentiment.megam.model
+./megam_i686.opt -predict sentiment.megam.model -fvals binary imdb.megam.test > sentiment.megam.out
+python3 megam_postprocess.py sentiment.megam.out
+python3 createchk.py imdb.megam.test megam imdb
+python3 count.py sentiment.megam.out
+Error rate = 771 / 6250 = 0.12336
+Accuracy: 87.66
+POS - Precision: 87.13 Recall: 88.33 F1 score: 87.72
+NEG - Precision: 88.20 Recall: 86.99 F1 score: 87.60
+
+3a TO RUN MEGAM ON UNLABELED TEST DATA FOR SPAM:
+python3 email_preprocess.py megam
+python3 spamtest_preprocess.py megam
+python3 insertlabel.py spamtest.feat megam
+./megam_i686.opt -fvals binary email.feat > spam.megam.model
+./megam_i686.opt -predict spam.megam.model -fvals binary megam.test > spam.megam.out
+python3 megam_postprocess.py spam.megam.out
+python3 createchk.py megam.test megam spam
+python3 count.py spam.megam.out
+Error rate = 5780 / 11512 = 0.502085
+Accuracy: 49.79
+SPAM - Precision: 49.75 Recall: 99.86 F1 score: 66.41
+HAM - Precision: 68.00 Recall: 29.36 F1 score: 0.58
+
+3b  TO RUN MEGAM ON UNLABELED TEST DATA FOR SENTIMENT ANALYSIS:
+python3 imdb_preprocess.py megam
+python3 insertlabel.py sentiment_test.feat.fixed megam
+./megam_i686.opt -fvals binary imdb.feat > sentiment.megam.model
+./megam_i686.opt -predict sentiment.megam.model -fvals binary megam.test > sentiment.megam.out
+python3 megam_postprocess.py sentiment.megam.out
+python3 createchk.py megam.test megam imdb
+python3 count.py sentiment.megam.out
+Error rate = 12444 / 25000 = 0.49776
+acc: 50.22
+POS - Precision: 49.88 Recall: 49.70 F1 score: 49.79
+NEG - Precision: 50.56 Recall: 50.74 F1 score: 50.65
+
+-------------------------------------------------------------------------------------------------------------
+OBSERVATIONS:
+-------------
+75% for training and 25% for development:
+-----------------------------------------
+Answer the following questions: In each case, which technique performs best?
+Based on class discussions, why do think this is?
+MegaM performs best. MegaM does not assume information that we don not have. hence lower information entropy values are not taken into account. The most uninformative distribution is taken to calculate which class a document belongs to.
+
+How does performance differ between SPAM detection and sentiment analysis (POSITIVE v. NEGATIVE)?
+The F1 score from all 3 machine learning techniques are higher for spam detection than for sentiment analysis.
+
+25% for training and 75% for development:
+-----------------------------------------
+Answer the following questions: How much did performance drop for each of the machine learning techniques?
+With only 25% training data the precision, recall and f-score will reduce. 
+For Naive Bayes and MegaM there was a drop of <1% in F1 scores when the training size was reduced.
+For SVM, there was a 2-3% drop in F1 score  when the training size was reduced.
+Were some machine learning techniques more robust given a smaller training set?
+MegaM was more robust given a small training set.
+Is there a difference between SPAM detection and sentiment analysis?
+The F1 scores were always higher for spam detection than for sentiment analysis with all three machine learning techniques.
+
